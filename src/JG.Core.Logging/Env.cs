@@ -10,10 +10,10 @@ internal enum LogFormat
 
 internal static class Env
 {
-    public static bool IsRunningInContainer()
+    public static bool IsDeployed()
     {
-        // this env var is set in all official .NET Core Docker images
-        return Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true";
+        return Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true"
+            || Environment.GetEnvironmentVariable("AWS_LAMBDA_FUNCTION_NAME") != null;
     }
 
     public static LogFormat? GetLogFormat()

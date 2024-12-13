@@ -11,7 +11,7 @@ internal class EnvironmentEnricher : ILogEventEnricher
 
     public EnvironmentEnricher()
     {
-        _environment = Environment.GetEnvironmentVariable("DEPLOY_ENV") ?? "local";
+        _environment = Environment.GetEnvironmentVariable("DEPLOY_ENV") ?? Environment.GetEnvironmentVariable("ENVIRONMENT") ?? "local";
     }
 
     public void Enrich(LogEvent logEvent, ILogEventPropertyFactory propertyFactory)
