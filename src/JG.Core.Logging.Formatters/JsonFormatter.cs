@@ -36,7 +36,9 @@ public class JsonFormatter : ITextFormatter
 
     public static void FormatEvent(LogEvent logEvent, TextWriter output, JsonValueFormatter valueFormatter)
     {
-        output.Write("{\"timestamp\":");
+        output.Write("{\"type\":\"log\"");
+
+        output.Write(",\"timestamp\":");
         JsonValueFormatter.WriteQuotedJsonString(logEvent.Timestamp.UtcDateTime.ToString("O"), output);
 
         output.Write(",\"level\":");
