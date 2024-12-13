@@ -17,6 +17,11 @@ internal class InfrastructureInfoEnricher : ILogEventEnricher
             _type = "eks";
             _instance = Environment.GetEnvironmentVariable("HOSTNAME") ?? "unknown";
         }
+        else if (Environment.GetEnvironmentVariable("AWS_LAMBDA_FUNCTION_NAME") != null)
+        {
+            _type = "serverless";
+            _instance = Environment.GetEnvironmentVariable("AWS_LAMBDA_FUNCTION_NAME") ?? "unknown";
+        }
         else
         {
             _type = "unknown";

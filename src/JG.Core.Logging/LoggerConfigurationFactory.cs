@@ -21,7 +21,7 @@ public static class LoggerConfigurationFactory
             .Enrich.With<InfrastructureInfoEnricher>()
             .Destructure.UsingAttributes();
 
-        if (Env.IsRunningInContainer() || Env.GetLogFormat() == LogFormat.Json)
+        if (Env.IsDeployed() || Env.GetLogFormat() == LogFormat.Json)
         {
             loggerConfig.WriteTo.Console(new JsonFormatter());
         }
