@@ -34,7 +34,7 @@ public class JsonFormatter : ITextFormatter
         output.WriteLine();
     }
 
-    public static void FormatEvent(LogEvent logEvent, TextWriter output, JsonValueFormatter valueFormatter)
+    private static void FormatEvent(LogEvent logEvent, TextWriter output, JsonValueFormatter valueFormatter)
     {
         output.Write("{\"type\":\"log\"");
 
@@ -67,8 +67,17 @@ public class JsonFormatter : ITextFormatter
 
         if (logEvent.Properties.TryGetValue("SourceContext", out var sourceContext))
         {
-            output.Write(",\"componentId\":");
+            output.Write(",\"component\":");
             valueFormatter.Format(sourceContext, output);
+        }
+        else
+        {
+            var lambdaFunctionName = Environment.GetEnvironmentVariable("AWS_LAMBDA_FUNCTION_NAME");
+            if (lambdaFunctionName != null)
+            {
+                output.Write(",\"component\":");
+                JsonValueFormatter.WriteQuotedJsonString(lambdaFunctionName, output);
+            }
         }
 
         if (logEvent.Properties.TryGetValue("infra", out var infra))
