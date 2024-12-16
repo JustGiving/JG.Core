@@ -48,9 +48,6 @@ public class JsonFormatter : ITextFormatter
         output.Write(MapLogLevelNumber(logEvent.Level));
 
         output.Write(",\"message\":");
-        JsonValueFormatter.WriteQuotedJsonString(logEvent.RenderMessage(), output);
-
-        output.Write(",\"messageTemplate\":");
         JsonValueFormatter.WriteQuotedJsonString(logEvent.MessageTemplate.Text, output);
 
         if (logEvent.Properties.TryGetValue("app", out var app))
