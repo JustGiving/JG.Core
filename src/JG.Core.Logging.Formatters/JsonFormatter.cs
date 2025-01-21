@@ -125,11 +125,6 @@ public class JsonFormatter : ITextFormatter
             return requestId.ToString();
         }
 
-        if (logEvent.TraceId.HasValue)
-        {
-            return logEvent.TraceId.Value.ToHexString();
-        }
-
         return null;
     }
 
