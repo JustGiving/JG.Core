@@ -5,7 +5,10 @@ namespace JG.Core.Logging;
 
 public static class WebHostBuilderExtensions
 {
-    public static IWebHostBuilder ConfigureLogging(this IWebHostBuilder builder, ILogger? logger = null)
+    public static IWebHostBuilder ConfigureLogging(
+        this IWebHostBuilder builder,
+        ILogger? logger = null
+    )
     {
         logger ??= LoggerConfigurationFactory.Create().CreateLogger();
         Log.Logger = logger;

@@ -8,20 +8,21 @@ public class JsonFormatter : ITextFormatter
 {
     readonly JsonValueFormatter _valueFormatter;
 
-    static readonly HashSet<string> IgnoredProperties = new([
-        // these go on top-level properties
-        "app",
-        "environment",
-        "infra",
-        "req",
-        "res",
-        "SourceContext", // componentId
-
-        // set by Serilog.AspNetCore package, we place some those on more specific top-level properties (like req and correlationId) and discard the rest
-        "RequestId",
-        "RequestPath",
-        "ConnectionId",
-    ]);
+    static readonly HashSet<string> IgnoredProperties = new(
+        [
+            // these go on top-level properties
+            "app",
+            "environment",
+            "infra",
+            "req",
+            "res",
+            "SourceContext", // componentId
+            // set by Serilog.AspNetCore package, we place some those on more specific top-level properties (like req and correlationId) and discard the rest
+            "RequestId",
+            "RequestPath",
+            "ConnectionId",
+        ]
+    );
 
     public JsonFormatter(JsonValueFormatter? valueFormatter = null)
     {
@@ -34,12 +35,19 @@ public class JsonFormatter : ITextFormatter
         output.WriteLine();
     }
 
-    private static void FormatEvent(LogEvent logEvent, TextWriter output, JsonValueFormatter valueFormatter)
+    private static void FormatEvent(
+        LogEvent logEvent,
+        TextWriter output,
+        JsonValueFormatter valueFormatter
+    )
     {
         output.Write("{\"type\":\"log\"");
 
         output.Write(",\"timestamp\":");
-        JsonValueFormatter.WriteQuotedJsonString(logEvent.Timestamp.UtcDateTime.ToString("O"), output);
+        JsonValueFormatter.WriteQuotedJsonString(
+            logEvent.Timestamp.UtcDateTime.ToString("O"),
+            output
+        );
 
         output.Write(",\"level\":");
         JsonValueFormatter.WriteQuotedJsonString(MapLogLevelName(logEvent.Level), output);
@@ -104,7 +112,7 @@ public class JsonFormatter : ITextFormatter
 
         if (correlationId != null)
         {
-            output.Write(",\"correlationId\":\"");
+            output.Write(",\"correlationId\":");
             JsonValueFormatter.WriteQuotedJsonString(correlationId, output);
         }
 
@@ -120,9 +128,34 @@ public class JsonFormatter : ITextFormatter
 
     private static string? GetCorrelationId(LogEvent logEvent)
     {
-        if (logEvent.Properties.TryGetValue("RequestId", out var requestIdProperty) && requestIdProperty is ScalarValue requestId)
+        if (
+            logEvent.Properties.TryGetValue("req", out var reqProperty)
+            && reqProperty is StructureValue req
+        )
         {
-            return requestId.ToString();
+            var headersProperty = req.Properties.FirstOrDefault(p => p.Name == "headers");
+
+            if (headersProperty.Value is DictionaryValue headers)
+            {
+                var requestIdHeaderProperty = headers.Elements[new ScalarValue("x-request-id")];
+
+                if (
+                    requestIdHeaderProperty is ScalarValue requestIdHeader
+                    && requestIdHeader.Value != null
+                )
+                {
+                    return requestIdHeader.Value.ToString();
+                }
+            }
+        }
+
+        if (
+            logEvent.Properties.TryGetValue("RequestId", out var requestIdProperty)
+            && requestIdProperty is ScalarValue requestId
+            && requestId?.Value != null
+        )
+        {
+            return requestId.Value.ToString();
         }
 
         return null;
@@ -170,7 +203,11 @@ public class JsonFormatter : ITextFormatter
         }
     }
 
-    private static void FormatErrorInfo(Exception exception, TextWriter output, JsonValueFormatter valueFormatter)
+    private static void FormatErrorInfo(
+        Exception exception,
+        TextWriter output,
+        JsonValueFormatter valueFormatter
+    )
     {
         output.Write(",\"err\":{");
 
@@ -200,7 +237,11 @@ public class JsonFormatter : ITextFormatter
         output.Write("}");
     }
 
-    private static void FormatProperties(IEnumerable<KeyValuePair<string, LogEventPropertyValue>> properties, TextWriter output, JsonValueFormatter valueFormatter)
+    private static void FormatProperties(
+        IEnumerable<KeyValuePair<string, LogEventPropertyValue>> properties,
+        TextWriter output,
+        JsonValueFormatter valueFormatter
+    )
     {
         output.Write(",\"properties\":{");
 

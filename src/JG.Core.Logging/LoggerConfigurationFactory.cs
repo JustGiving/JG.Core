@@ -12,8 +12,18 @@ public static class LoggerConfigurationFactory
     public static LoggerConfiguration Create()
     {
         var loggerConfig = new LoggerConfiguration()
-            .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
-            .MinimumLevel.Override("System", minimumLevel: LogEventLevel.Warning)
+            .MinimumLevel.Override(
+                "Microsoft",
+                minimumLevel: Env.IsDeployed() ? LogEventLevel.Warning : LogEventLevel.Information
+            )
+            .MinimumLevel.Override(
+                "System",
+                minimumLevel: Env.IsDeployed() ? LogEventLevel.Warning : LogEventLevel.Information
+            )
+            .MinimumLevel.Override(
+                "Microsoft.AspNetCore.DataProtection.Repositories.FileSystemXmlRepository",
+                minimumLevel: Env.IsDeployed() ? LogEventLevel.Error : LogEventLevel.Information
+            )
             .MinimumLevel.ControlledBy(new LoggingLevelSwitch(Env.GetLogEventLevel()))
             .Enrich.FromLogContext()
             .Enrich.With<AppInfoEnricher>()
@@ -21,7 +31,7 @@ public static class LoggerConfigurationFactory
             .Enrich.With<InfrastructureInfoEnricher>()
             .Destructure.UsingAttributes();
 
-        if (Env.IsDeployed() || Env.GetLogFormat() == LogFormat.Json)
+        if (Env.GetLogFormat() == LogFormat.Json || Env.IsDeployed())
         {
             loggerConfig.WriteTo.Console(new JsonFormatter());
         }
