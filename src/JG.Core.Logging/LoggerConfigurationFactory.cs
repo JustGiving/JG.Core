@@ -20,10 +20,6 @@ public static class LoggerConfigurationFactory
                 "System",
                 minimumLevel: Env.IsDeployed() ? LogEventLevel.Warning : LogEventLevel.Information
             )
-            .MinimumLevel.Override(
-                "Microsoft.AspNetCore.DataProtection.Repositories.FileSystemXmlRepository",
-                minimumLevel: Env.IsDeployed() ? LogEventLevel.Error : LogEventLevel.Information
-            )
             .MinimumLevel.ControlledBy(new LoggingLevelSwitch(Env.GetLogEventLevel()))
             .Enrich.FromLogContext()
             .Enrich.With<AppInfoEnricher>()

@@ -1,6 +1,4 @@
-using JG.Core.Logging;
 using JG.Core.Logging.Middleware;
-using Microsoft.AspNetCore.Mvc.ApplicationParts;
 
 namespace JG.Core.Example.HostBuilder.Web;
 
