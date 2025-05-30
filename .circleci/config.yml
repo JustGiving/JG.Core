@@ -1,0 +1,38 @@
+version: 2.1
+
+orbs:
+  dotnetcli: justgiving/dotnetcli@2.13.2
+  checkmarx: justgiving/checkmarx@1.0.0
+  whitesource: justgiving/whitesource@1.0.0
+
+workflows:
+  version: 2
+  main:
+    jobs:
+      - dotnetcli/test:
+          name: test
+      - approve_publish:
+          type: approval
+          requires:
+            - test
+          filters:
+            branches:
+              only: main
+      - dotnetcli/nuget:
+          version-prefix: '1.0'
+          requires:
+            - approve_publish
+  security:
+    jobs:
+      - whitesource/scan:
+          context: security-whitesource
+          registry-url: 651244981378.dkr.ecr.eu-west-1.amazonaws.com
+          filters:
+            branches:
+              only: master
+      - checkmarx/scan:
+          context: security-checkmarx
+          registry-url: 651244981378.dkr.ecr.eu-west-1.amazonaws.com
+          filters:
+            branches:
+              only: master
