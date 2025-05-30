@@ -1,6 +1,6 @@
+using JG.Core.Info;
 using Serilog.Core;
 using Serilog.Events;
-using System.Reflection;
 
 namespace JG.Core.Logging.Enrichers;
 
@@ -8,29 +8,21 @@ internal class AppInfoEnricher : ILogEventEnricher
 {
     public const string AppPropertyName = "app";
 
-    private readonly string _name;
-    private readonly string _version;
-    private readonly string? _deployable;
-
-    public AppInfoEnricher()
-    {
-        _name = Environment.GetEnvironmentVariable("SERVICE_NAME") ?? "unknown";
-        _version = Environment.GetEnvironmentVariable("SERVICE_VERSION") ?? Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "unknown";
-        _deployable = Environment.GetEnvironmentVariable("DEPLOYABLE_NAME");
-    }
-
     public void Enrich(LogEvent logEvent, ILogEventPropertyFactory propertyFactory)
     {
-        var properties = new List<LogEventProperty> {
-            new("name", new ScalarValue(_name)),
-            new ("version", new ScalarValue(_version)),
+        var properties = new List<LogEventProperty>
+        {
+            new("name", new ScalarValue(ServiceInfo.Name)),
+            new("version", new ScalarValue(ServiceInfo.Version)),
         };
 
-        if (_deployable != null)
+        if (ServiceInfo.Deployable != null)
         {
-            properties.Add(new("deployable", new ScalarValue(_deployable)));
+            properties.Add(new("deployable", new ScalarValue(ServiceInfo.Deployable)));
         }
 
-        logEvent.AddPropertyIfAbsent(new LogEventProperty(AppPropertyName, new StructureValue(properties)));
+        logEvent.AddPropertyIfAbsent(
+            new LogEventProperty(AppPropertyName, new StructureValue(properties))
+        );
     }
 }

@@ -5,7 +5,7 @@ namespace JG.Core.Logging;
 internal enum LogFormat
 {
     Text,
-    Json
+    Json,
 }
 
 internal static class Env

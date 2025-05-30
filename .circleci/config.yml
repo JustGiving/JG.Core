@@ -1,0 +1,77 @@
+version: 2.1
+
+orbs:
+  dotnetcli: justgiving/dotnetcli@2.13.2
+  checkmarx: justgiving/checkmarx@1.0.0
+  whitesource: justgiving/whitesource@1.0.0
+
+jobs:
+  check-formatting:
+    executor: dotnetcli/default
+    steps:
+      - run: dotnet tool install csharpier --version 1.0.2 --global
+      - run: /root/.dotnet/tools/csharpier check .
+
+  test:
+    executor: dotnetcli/default
+    steps:
+      - dotnetcli/configure-nuget
+      - dotnetcli/configure-openssh
+      - checkout
+      - run:
+          name: Build example apps
+          command: |
+            dotnet build ./examples/hostbuilder-web/JG.Core.Example.HostBuilder.Web.csproj
+            dotnet build ./examples/hostbuilder-worker/JG.Core.Example.HostBuilder.Worker.csproj
+      - run:
+          name: Test
+          command: |
+            dotnet test --logger "junit;LogFilePath=/tmp/test/{assembly}-{framework}-results.xml"
+      - store_test_results:
+          path: /tmp/test
+
+  publish:
+    executor: dotnetcli/default
+    steps:
+      - dotnetcli/configure-nuget
+      - dotnetcli/configure-openssh
+      - checkout
+      - run:
+          name: Publish
+          command: |
+            dotnet publish \
+              -p:Version="$(cat current-version)" \
+              --output pub \
+              --configuration Release \
+              --nologo
+workflows:
+  version: 2
+  main:
+    jobs:
+      - test:
+          name: test
+      - check-formatting
+      - approve_publish:
+          type: approval
+          requires:
+            - test
+          filters:
+            branches:
+              only: main
+      - publish:
+          requires:
+            - approve_publish
+  security:
+    jobs:
+      - whitesource/scan:
+          context: security-whitesource
+          registry-url: 651244981378.dkr.ecr.eu-west-1.amazonaws.com
+          filters:
+            branches:
+              only: master
+      - checkmarx/scan:
+          context: security-checkmarx
+          registry-url: 651244981378.dkr.ecr.eu-west-1.amazonaws.com
+          filters:
+            branches:
+              only: master
