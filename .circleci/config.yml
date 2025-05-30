@@ -26,9 +26,7 @@ jobs:
       - run:
           name: Test
           command: |
-            dotnet test \
-              --configuration Release \
-              --logger "junit;LogFilePath=/tmp/test/{assembly}-{framework}-results.xml"
+            dotnet test --logger "junit;LogFilePath=/tmp/test/{assembly}-{framework}-results.xml"
       - store_test_results:
           path: /tmp/test
 

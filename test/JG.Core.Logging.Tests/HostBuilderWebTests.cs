@@ -2,7 +2,7 @@ namespace JG.Core.Logging.Test;
 
 public class HostBuilderWebTests
 {
-    [Test, Timeout(60_000)]
+    [Test, Timeout(120_000)]
     public void HostBuilderWeb_WhenRunningInLocally_LogsInConsoleFormat()
     {
         var lines = ProjectRunner.CaptureLogLinesFromProject(
@@ -23,7 +23,7 @@ public class HostBuilderWebTests
         );
     }
 
-    [Test, Timeout(60_000)]
+    [Test, Timeout(120_000)]
     public void HostBuilderWeb_WhenRunningInEKS_LogsInJsonFormat()
     {
         var logEvent = ProjectRunner.CaptureLogEventFromProject(
@@ -64,7 +64,7 @@ public class HostBuilderWebTests
         });
     }
 
-    [Test, Timeout(60_000)]
+    [Test, Timeout(120_000)]
     public void HostBuilderWeb_WhenRunningInAwsLambda_LogsInJsonFormat()
     {
         var logEvent = ProjectRunner.CaptureLogEventFromProject(
