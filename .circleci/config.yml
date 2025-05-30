@@ -5,12 +5,20 @@ orbs:
   checkmarx: justgiving/checkmarx@1.0.0
   whitesource: justgiving/whitesource@1.0.0
 
+jobs:
+  check-formatting:
+    executor: dotnetcli/default
+    steps:
+      - run: dotnet tool install csharpier --version 1.0.2 --global
+      - run: csharpier check .
+
 workflows:
   version: 2
   main:
     jobs:
       - dotnetcli/test:
           name: test
+      - check-formatting
       - approve_publish:
           type: approval
           requires:
