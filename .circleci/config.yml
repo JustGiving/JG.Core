@@ -12,11 +12,45 @@ jobs:
       - run: dotnet tool install csharpier --version 1.0.2 --global
       - run: /root/.dotnet/tools/csharpier check .
 
+  test:
+    executor: dotnetcli/default
+    steps:
+      - dotnetcli/configure-nuget
+      - dotnetcli/configure-openssh
+      - checkout
+      - run:
+          name: Build example apps
+          command: |
+            dotnet build --configuration Release ./examples/hostbuilder-web/JG.Core.Example.HostBuilder.Web.csproj
+            dotnet build --configuration Release ./examples/hostbuilder-worker/JG.Core.Example.HostBuilder.Worker.csproj
+      - run:
+          name: Test
+          command: |
+            dotnet test \
+              --configuration Release \
+              --logger "junit;LogFilePath=/tmp/test/{assembly}-{framework}-results.xml"
+      - store_test_results:
+          path: /tmp/test
+
+  publish:
+    executor: dotnetcli/default
+    steps:
+      - dotnetcli/configure-nuget
+      - dotnetcli/configure-openssh
+      - checkout
+      - run:
+          name: Publish
+          command: |
+            dotnet publish \
+              -p:Version="$(cat current-version)" \
+              --output pub \
+              --configuration Release \
+              --nologo
 workflows:
   version: 2
   main:
     jobs:
-      - dotnetcli/test:
+      - test:
           name: test
       - check-formatting
       - approve_publish:
@@ -26,8 +60,7 @@ workflows:
           filters:
             branches:
               only: main
-      - dotnetcli/nuget:
-          version-prefix: '1.0'
+      - publish:
           requires:
             - approve_publish
   security:
