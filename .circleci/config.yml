@@ -21,8 +21,8 @@ jobs:
       - run:
           name: Build example apps
           command: |
-            dotnet build --configuration Release ./examples/hostbuilder-web/JG.Core.Example.HostBuilder.Web.csproj
-            dotnet build --configuration Release ./examples/hostbuilder-worker/JG.Core.Example.HostBuilder.Worker.csproj
+            dotnet build ./examples/hostbuilder-web/JG.Core.Example.HostBuilder.Web.csproj
+            dotnet build ./examples/hostbuilder-worker/JG.Core.Example.HostBuilder.Worker.csproj
       - run:
           name: Test
           command: |

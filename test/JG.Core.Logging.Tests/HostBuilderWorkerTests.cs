@@ -2,19 +2,22 @@ namespace JG.Core.Logging.Test;
 
 public class HostBuilderWorkerTests
 {
-    [Test]
+    [Test, Timeout(60_000)]
     public void HostBuilderWorker_WhenRunningInLocally_LogsInConsoleFormat()
     {
         var lines = ProjectRunner.CaptureLogLinesFromProject(
             projectPath: "examples/hostbuilder-worker",
-            environment: new Dictionary<string, string> { },
+            environment: new Dictionary<string, string>
+            {
+                { "DOTNET_RUNNING_IN_CONTAINER", "false" },
+            },
             lineCount: 4
         );
 
         Assert.That(lines, Has.Some.Match("[[0-9]+:[0-9]+:[0-9]+ INF] Worker running"));
     }
 
-    [Test]
+    [Test, Timeout(60_000)]
     public void HostBuilderWorker_WhenRunningInEKS_LogsInJsonFormat()
     {
         var logEvent = ProjectRunner.CaptureLogEventFromProject(
@@ -44,7 +47,7 @@ public class HostBuilderWorkerTests
         });
     }
 
-    [Test]
+    [Test, Timeout(60_000)]
     public void HostBuilderWorker_WhenRunningInAwsLambda_LogsInJsonFormat()
     {
         var logEvent = ProjectRunner.CaptureLogEventFromProject(

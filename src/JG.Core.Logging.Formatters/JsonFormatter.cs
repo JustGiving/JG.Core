@@ -128,6 +128,7 @@ public class JsonFormatter : ITextFormatter
 
     private static string? GetCorrelationId(LogEvent logEvent)
     {
+        // try to extract the correlation id from req.headers.x-request.id
         if (
             logEvent.Properties.TryGetValue("req", out var reqProperty)
             && reqProperty is StructureValue req
@@ -135,17 +136,17 @@ public class JsonFormatter : ITextFormatter
         {
             var headersProperty = req.Properties.FirstOrDefault(p => p.Name == "headers");
 
-            if (headersProperty.Value is DictionaryValue headers)
-            {
-                var requestIdHeaderProperty = headers.Elements[new ScalarValue("x-request-id")];
-
-                if (
-                    requestIdHeaderProperty is ScalarValue requestIdHeader
-                    && requestIdHeader.Value != null
+            if (
+                headersProperty.Value is DictionaryValue headers
+                && headers.Elements.TryGetValue(
+                    new ScalarValue("x-request-id"),
+                    out var requestIdHeaderProperty
                 )
-                {
-                    return requestIdHeader.Value.ToString();
-                }
+                && requestIdHeaderProperty is ScalarValue requestIdHeader
+                && requestIdHeader.Value != null
+            )
+            {
+                return requestIdHeader.Value.ToString();
             }
         }
 

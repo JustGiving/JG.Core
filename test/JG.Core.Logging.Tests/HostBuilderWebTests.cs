@@ -2,28 +2,35 @@ namespace JG.Core.Logging.Test;
 
 public class HostBuilderWebTests
 {
-    [Test]
+    [Test, Timeout(60_000)]
     public void HostBuilderWeb_WhenRunningInLocally_LogsInConsoleFormat()
     {
         var lines = ProjectRunner.CaptureLogLinesFromProject(
             projectPath: "examples/hostbuilder-web",
-            environment: new Dictionary<string, string> { },
+            environment: new Dictionary<string, string>
+            {
+                { "ASPNETCORE_HTTP_PORTS", "5000" },
+                { "DOTNET_RUNNING_IN_CONTAINER", "false" },
+            },
             lineCount: 5
         );
 
         Assert.That(
             lines,
-            Has.Some.Match("[[0-9]+:[0-9]+:[0-9]+ INF] Now listening on: http://localhost:5000")
+            Has.Some.Match(
+                "[[0-9]+:[0-9]+:[0-9]+ INF] Now listening on: http://(localhost|\\[\\:\\:\\]):5000"
+            )
         );
     }
 
-    [Test]
+    [Test, Timeout(60_000)]
     public void HostBuilderWeb_WhenRunningInEKS_LogsInJsonFormat()
     {
         var logEvent = ProjectRunner.CaptureLogEventFromProject(
             projectPath: "examples/hostbuilder-web",
             environment: new Dictionary<string, string>
             {
+                { "ASPNETCORE_HTTP_PORTS", "5000" },
                 { "DOTNET_RUNNING_IN_CONTAINER", "true" },
                 { "DEPLOY_ENV", "test" },
                 { "EKS", "true" },
@@ -57,13 +64,14 @@ public class HostBuilderWebTests
         });
     }
 
-    [Test]
+    [Test, Timeout(60_000)]
     public void HostBuilderWeb_WhenRunningInAwsLambda_LogsInJsonFormat()
     {
         var logEvent = ProjectRunner.CaptureLogEventFromProject(
             projectPath: "examples/hostbuilder-web",
             environment: new Dictionary<string, string>
             {
+                { "ASPNETCORE_HTTP_PORTS", "5000" },
                 { "AWS_LAMBDA_FUNCTION_NAME", "test-jg-test" },
                 { "ENVIRONMENT", "test" },
                 { "SERVICE_NAME", "jg-test" },
