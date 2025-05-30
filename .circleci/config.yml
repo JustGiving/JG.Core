@@ -10,7 +10,7 @@ jobs:
     executor: dotnetcli/default
     steps:
       - run: dotnet tool install csharpier --version 1.0.2 --global
-      - run: csharpier check .
+      - run: /root/.dotnet/tools/csharpier check .
 
 workflows:
   version: 2
