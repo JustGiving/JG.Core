@@ -22,6 +22,9 @@ public class RequestLogger
 
     private static readonly ILogger Log = Serilog.Log.ForContext<RequestLogger>();
 
+    public static Func<string, object, bool, IDisposable> LogContextPushProperty =
+        LogContext.PushProperty;
+
     public RequestLogger(RequestDelegate next, IOptions<RequestLoggerOptions> options)
     {
         _next = next;
@@ -30,37 +33,44 @@ public class RequestLogger
 
     public async Task Invoke(HttpContext context)
     {
-        using (LogContext.PushProperty("req", GetRequest(context), true))
-        using (LogContext.PushProperty("RequestId", GetRequestId(context), true))
+        using (LogContextPushProperty("req", GetRequest(context), true))
         {
             var sw = Stopwatch.StartNew();
             await _next.Invoke(context);
             sw.Stop();
 
+            // backward compatibility with GG.Library.LoggingInitiator.Serilog,
+            // access logs should be used instead
+#pragma warning disable CS0618 // Type or member is obsolete
             if (_options.LogHandlingRequest)
             {
                 var isStatusEndpoint =
                     context.Request.Path.Value?.ToLower().Contains("/status/") ?? false;
 
-                if (isStatusEndpoint && !_options.LogStatusEndpoints)
+                if (isStatusEndpoint)
                 {
                     return;
                 }
 
                 using (
-                    LogContext.PushProperty(
+                    LogContextPushProperty(
                         "res",
-                        GetResponse(context, sw.ElapsedMilliseconds),
+                        new
+                        {
+                            durationMs = sw.ElapsedMilliseconds,
+                            statusCode = context.Response.StatusCode,
+                        },
                         true
                     )
                 )
                 {
                     Log.Information(
-                        "Handled request {PathValue}",
+                        "Handling request {PathValue}",
                         context.Request.Path.Value ?? "unknown"
                     );
                 }
             }
+#pragma warning restore CS0618 // Type or member is obsolete
         }
     }
 
@@ -82,15 +92,5 @@ public class RequestLogger
             referer = context.Request.Headers.Referer.FirstOrDefault(),
             clientIp = context.Request.HttpContext.Connection.RemoteIpAddress?.ToString(),
         };
-    }
-
-    private static object GetRequestId(HttpContext context)
-    {
-        return context.Request.Headers.FirstOrDefault(h => h.Key == "x-request-id");
-    }
-
-    private static object GetResponse(HttpContext context, long ms)
-    {
-        return new { durationMs = ms, statusCode = context.Response.StatusCode };
     }
 }

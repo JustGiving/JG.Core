@@ -6,7 +6,85 @@ namespace JG.Core.Logging.Formatters.Test;
 public class JsonFormatterTests
 {
     [Test]
-    public void JsonFormatter_OutputsValidJson()
+    public void JsonFormatter_WithMinimalProperties_OutputsValidJson()
+    {
+        var formatter = new JsonFormatter();
+
+        var timestamp = new DateTimeOffset(new DateTime(2025, 1, 1));
+        var logEvent = new LogEvent(
+            timestamp,
+            LogEventLevel.Information,
+            null,
+            new MessageTemplate("test", []),
+            []
+        );
+
+        var output = new StringWriter();
+
+        formatter.Format(logEvent, output);
+
+        var result = output.ToString();
+
+        var expected =
+            JsonSerializer.Serialize(
+                new
+                {
+                    type = "log",
+                    timestamp = "2025-01-01T00:00:00.0000000Z",
+                    level = "info",
+                    levelNumber = 30,
+                    message = "test",
+                }
+            ) + "\n";
+
+        Assert.That(result, Is.EqualTo(expected).NoClip);
+    }
+
+    [Test]
+    public void JsonFormatter_WithErrorDetails_OutputsValidJson()
+    {
+        var formatter = new JsonFormatter();
+
+        var timestamp = new DateTimeOffset(new DateTime(2025, 1, 1));
+        var logEvent = new LogEvent(
+            timestamp,
+            LogEventLevel.Error,
+            new TestException(),
+            new MessageTemplate("test", []),
+            []
+        );
+
+        var output = new StringWriter();
+
+        formatter.Format(logEvent, output);
+
+        var result = output.ToString();
+
+        var expected =
+            JsonSerializer.Serialize(
+                new
+                {
+                    type = "log",
+                    timestamp = "2025-01-01T00:00:00.0000000Z",
+                    level = "error",
+                    levelNumber = 50,
+                    message = "test",
+                    err = new
+                    {
+                        type = "TestException",
+                        message = "test-message",
+                        stack = "test-stack",
+                        source = "test-source",
+                        code = "0000002A",
+                    },
+                }
+            ) + "\n";
+
+        Assert.That(result, Is.EqualTo(expected).NoClip);
+    }
+
+    [Test]
+    public void JsonFormatter_WithAllSupportedProperties_OutputsValidJson()
     {
         var formatter = new JsonFormatter();
 
@@ -78,6 +156,7 @@ public class JsonFormatterTests
                     )
                 ),
                 new LogEventProperty("foo", new ScalarValue(42)),
+                new LogEventProperty("bar", new ScalarValue("baz")),
             ]
         );
 
@@ -128,7 +207,7 @@ public class JsonFormatterTests
                         code = "0000002A",
                     },
                     correlationId = "test-request-id",
-                    properties = new Dictionary<string, object> { { "foo", 42 } },
+                    properties = new Dictionary<string, object> { { "foo", 42 }, { "bar", "baz" } },
                 }
             ) + "\n";
 

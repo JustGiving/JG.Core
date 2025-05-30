@@ -49,3 +49,21 @@ public class Program
 }
 ```
 
+### ASP.NET Core Middleware
+
+The library provides an ASP.NET Core middleware that enriches log messages with request details.
+
+To enable the middleware:
+
+```cs
+app.UseMiddleware<RequestLogger>();
+```
+
+Additional options can be provided to the middleware by using the `AddRequestLoggerOptions` extension method on `IServiceCollection`:
+
+```cs
+services.AddRequestLoggerOptions(options =>
+{
+    options.LogHandlingRequest = true;
+});
+```

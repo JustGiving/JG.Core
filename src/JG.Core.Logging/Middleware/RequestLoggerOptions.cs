@@ -2,7 +2,9 @@
 {
     public class RequestLoggerOptions
     {
-        public bool LogStatusEndpoints { get; set; }
+        [Obsolete(
+            "This option is to provide backward compatibility with GG.Library.LoggingInitiator.Serilog, prefer using access logs instead"
+        )]
         public bool LogHandlingRequest { get; set; }
     }
 }
