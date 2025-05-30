@@ -72,6 +72,7 @@ public class HostBuilderWebTests
             environment: new Dictionary<string, string>
             {
                 { "ASPNETCORE_HTTP_PORTS", "5000" },
+                { "DOTNET_RUNNING_IN_CONTAINER", "false" },
                 { "AWS_LAMBDA_FUNCTION_NAME", "test-jg-test" },
                 { "ENVIRONMENT", "test" },
                 { "SERVICE_NAME", "jg-test" },
