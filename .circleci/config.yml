@@ -30,20 +30,26 @@ jobs:
       - store_test_results:
           path: /tmp/test
 
-  publish:
+  release:
     executor: dotnetcli/default
     steps:
       - dotnetcli/configure-nuget
       - dotnetcli/configure-openssh
       - checkout
       - run:
-          name: Publish
+          name: Pack
           command: |
-            dotnet publish \
+            dotnet pack \
               -p:Version="$(cat current-version)" \
+              -p:RepositoryUrl="https://github.com/JustGiving/$CIRCLE_PROJECT_REPONAME" \
               --output pub \
               --configuration Release \
               --nologo
+      - run:
+          name: Nuget Push
+          command: |
+            dotnet nuget push 'pub/*.nupkg' --source github
+            
 workflows:
   version: 2
   main:
@@ -51,16 +57,16 @@ workflows:
       - test:
           name: test
       - check-formatting
-      - approve_publish:
+      - approve_release:
           type: approval
           requires:
             - test
           filters:
             branches:
               only: main
-      - publish:
+      - release:
           requires:
-            - approve_publish
+            - approve_release
   security:
     jobs:
       - whitesource/scan:
