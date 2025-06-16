@@ -212,6 +212,34 @@ public class JsonFormatter : ITextFormatter
     {
         output.Write(",\"err\":{");
 
+        FormatErrorProperties(exception, output);
+
+        if (exception.InnerException != null)
+        {
+
+            output.Write(",\"innerErrors\":[");
+
+            output.Write("{");
+            FormatErrorProperties(exception.InnerException, output);
+            output.Write("}");
+
+            foreach (var innerException in GetInnerExceptions(exception.InnerException))
+            {
+                output.Write(",{");
+                FormatErrorProperties(innerException, output);
+                output.Write("}");
+            }
+
+            output.Write("]");
+        }
+
+        output.Write("}");
+    }
+
+    private static void FormatErrorProperties(
+        Exception exception,
+        TextWriter output)
+    {
         output.Write("\"type\":");
         JsonValueFormatter.WriteQuotedJsonString(exception.GetType().Name, output);
 
@@ -232,10 +260,17 @@ public class JsonFormatter : ITextFormatter
 
         output.Write(",\"code\":");
         JsonValueFormatter.WriteQuotedJsonString(exception.HResult.ToString("X8"), output);
+    }
 
-        // TODO: inner exceptions?
+    private static IEnumerable<Exception> GetInnerExceptions(Exception root)
+    {
+        var current = root;
 
-        output.Write("}");
+        while (current.InnerException != null)
+        {
+            current = current.InnerException;
+            yield return current;
+        }
     }
 
     private static void FormatProperties(
