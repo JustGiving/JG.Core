@@ -49,7 +49,7 @@ public class JsonFormatterTests
         var logEvent = new LogEvent(
             timestamp,
             LogEventLevel.Error,
-            new TestException(),
+            new TestException("test-message"),
             new MessageTemplate("test", []),
             []
         );
@@ -84,6 +84,130 @@ public class JsonFormatterTests
     }
 
     [Test]
+    public void JsonFormatter_WithInnerException_OutputsValidJson()
+    {
+        var formatter = new JsonFormatter();
+
+        var timestamp = new DateTimeOffset(new DateTime(2025, 1, 1));
+        var logEvent = new LogEvent(
+            timestamp,
+            LogEventLevel.Error,
+            new TestException("root", new TestException("inner")),
+            new MessageTemplate("test", []),
+            []
+        );
+
+        var output = new StringWriter();
+
+        formatter.Format(logEvent, output);
+
+        var result = output.ToString();
+
+        var expected =
+            JsonSerializer.Serialize(
+                new
+                {
+                    type = "log",
+                    timestamp = "2025-01-01T00:00:00.0000000Z",
+                    level = "error",
+                    levelNumber = 50,
+                    message = "test",
+                    err = new
+                    {
+                        type = "TestException",
+                        message = "root",
+                        stack = "test-stack",
+                        source = "test-source",
+                        code = "0000002A",
+                        innerErrors = new[] {
+                            new
+                            {
+                                type = "TestException",
+                                message = "inner",
+                                stack = "test-stack",
+                                source = "test-source",
+                                code = "0000002A",
+                            }
+                        }
+                    },
+                }
+            ) + "\n";
+
+        Assert.That(result, Is.EqualTo(expected).NoClip);
+    }
+
+
+    [Test]
+    public void JsonFormatter_WithMultipleInnerExceptions_OutputsValidJson()
+    {
+        var formatter = new JsonFormatter();
+
+        var timestamp = new DateTimeOffset(new DateTime(2025, 1, 1));
+        var logEvent = new LogEvent(
+            timestamp,
+            LogEventLevel.Error,
+            new TestException("root", new TestException("inner", new TestException("inner-inner", new TestException("inner-inner-inner")))),
+            new MessageTemplate("test", []),
+            []
+        );
+
+        var output = new StringWriter();
+
+        formatter.Format(logEvent, output);
+
+        var result = output.ToString();
+
+        var expected =
+            JsonSerializer.Serialize(
+                new
+                {
+                    type = "log",
+                    timestamp = "2025-01-01T00:00:00.0000000Z",
+                    level = "error",
+                    levelNumber = 50,
+                    message = "test",
+                    err = new
+                    {
+                        type = "TestException",
+                        message = "root",
+                        stack = "test-stack",
+                        source = "test-source",
+                        code = "0000002A",
+                        innerErrors = new[] {
+                            new
+                            {
+                                type = "TestException",
+                                message = "inner",
+                                stack = "test-stack",
+                                source = "test-source",
+                                code = "0000002A",
+                            },
+                            new
+                            {
+                                type = "TestException",
+                                message = "inner-inner",
+                                stack = "test-stack",
+                                source = "test-source",
+                                code = "0000002A",
+                            },
+                            new
+                            {
+                                type = "TestException",
+                                message = "inner-inner-inner",
+                                stack = "test-stack",
+                                source = "test-source",
+                                code = "0000002A",
+                            }
+                        }
+                    },
+                }
+            ) + "\n";
+
+        Assert.That(result, Is.EqualTo(expected).NoClip);
+    }
+
+
+    [Test]
     public void JsonFormatter_WithAllSupportedProperties_OutputsValidJson()
     {
         var formatter = new JsonFormatter();
@@ -92,7 +216,7 @@ public class JsonFormatterTests
         var logEvent = new LogEvent(
             timestamp,
             LogEventLevel.Information,
-            new TestException(),
+            new TestException("test-message"),
             new MessageTemplate("test", []),
             [
                 new LogEventProperty(
@@ -216,8 +340,8 @@ public class JsonFormatterTests
 
     class TestException : Exception
     {
-        public TestException()
-            : base("test-message")
+        public TestException(string message, Exception innerException = null)
+            : base(message, innerException)
         {
             Source = "test-source";
             HResult = 42;
