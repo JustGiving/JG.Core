@@ -246,10 +246,19 @@ public class JsonFormatter : ITextFormatter
         output.Write(",\"message\":");
         JsonValueFormatter.WriteQuotedJsonString(exception.Message, output);
 
-        if (exception.StackTrace != null)
+        try
         {
-            output.Write(",\"stack\":");
-            JsonValueFormatter.WriteQuotedJsonString(exception.StackTrace, output);
+            if (exception.StackTrace != null)
+            {
+                output.Write(",\"stack\":");
+                JsonValueFormatter.WriteQuotedJsonString(exception.StackTrace, output);
+            }
+        }
+        catch
+        {
+            // .NET Framework seems to sometimes throw when the stack trace gets accessed.
+            // There's nothing we can do to recover, so we're simply omitting the stack trace
+            // in the log message if an exception gets thrown.
         }
 
         if (exception.Source != null)
